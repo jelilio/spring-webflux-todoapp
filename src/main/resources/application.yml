@@ -1,0 +1,35 @@
+spring:
+  application:
+    name: todoapp
+  profiles:
+    active: dev
+  config:
+    import: optional:file:.env[.properties]
+
+  data:
+    mongodb:
+      uri: mongodb://${MONGODB_URL:localhost:27017}
+      database: ${MONGODB_DATABASE:todoapp}
+
+rsa:
+  access:
+    private-key: classpath:certs/access/private.pem
+    public-key: classpath:certs/access/public.pem
+  refresh:
+    private-key: classpath:certs/refresh/private.pem
+    public-key: classpath:certs/refresh/public.pem
+
+cors:
+  allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:3001}
+  allowed-methods: ${CORS_ALLOWED_METHODS:POST,GET,PUT,OPTIONS,DELETE}
+  allowed-credentials: ${CORS_ALLOWED_CREDENTIALS:true}
+  allowed-headers: ${CORS_ALLOWED_HEADERS:Access-Control-Allow-Origin,Authorization,Content-Type,Accept-Language}
+  max-age: ${CORS_MAX_AGE:200}
+
+auth:
+  issuer: http://jelilio.github.iio
+  expiration:
+    access: 3600 # seconds
+    refresh: 28 # days
+  otp:
+    duration: 3600 # seconds
