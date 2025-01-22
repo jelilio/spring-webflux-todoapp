@@ -18,6 +18,7 @@ repositories {
 }
 
 dependencies {
+	implementation("org.apache.commons:commons-lang3:3.12.0")
 	implementation("org.springframework.boot:spring-boot-starter-data-mongodb-reactive")
 	implementation("org.springframework.boot:spring-boot-starter-oauth2-resource-server")
 	implementation("org.springframework.boot:spring-boot-starter-validation")

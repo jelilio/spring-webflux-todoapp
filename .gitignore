@@ -35,3 +35,12 @@ out/
 
 ### VS Code ###
 .vscode/
+
+### .env ###
+.env
+
+### Mac Stuffs ###
+.DS_Store
+
+### keys ###
+*.pem
