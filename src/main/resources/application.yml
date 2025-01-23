@@ -30,6 +30,6 @@ auth:
   issuer: http://jelilio.github.iio
   expiration:
     access: 3600 # seconds
-    refresh: 28 # days
+    refresh: 30 # days
   otp:
-    duration: 3600 # seconds
+    duration: 300 # seconds
