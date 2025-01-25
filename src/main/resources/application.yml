@@ -13,11 +13,11 @@ spring:
 
 rsa:
   access:
-    private-key: classpath:certs/access/private.pem
-    public-key: classpath:certs/access/public.pem
+    private-key: ${ACCESS_PRIVATE_KEY:classpath:certs/access/private.pem}
+    public-key: ${ACCESS_PUBLIC_KEY:classpath:certs/access/public.pem}
   refresh:
-    private-key: classpath:certs/refresh/private.pem
-    public-key: classpath:certs/refresh/public.pem
+    private-key: ${REFRESH_PRIVATE_KEY:classpath:certs/refresh/private.pem}
+    public-key: ${REFRESH_PUBLIC_KEY:classpath:certs/refresh/public.pem}
 
 cors:
   allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:3001}

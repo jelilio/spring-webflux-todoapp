@@ -34,7 +34,7 @@ public class OtpServiceImpl implements OtpService {
 
   @Override
   public Mono<Optional<String>> getOtp(String email) {
-    Query query = Query.query(where("email").is(email));
+    Query query = Query.query(where("_id").is(email));
 
     return reactiveMongoTemplate.findOne(query, OtpCache.class)
         .map(it -> Optional.of(it.getOtpKey()))

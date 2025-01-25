@@ -63,7 +63,8 @@ public class SecurityConfig {
         .csrf(ServerHttpSecurity.CsrfSpec::disable)
         .cors(it -> it.configurationSource(corsConfigurationSource()))
         .authorizeExchange(exchanges -> exchanges
-            .pathMatchers("/api/admin/**").hasRole("ROLE_ADMIN")
+            .pathMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")
+            .pathMatchers("/api/user/**").hasAuthority("ROLE_USER")
             .pathMatchers(HttpMethod.POST,"/api/auth/refresh").permitAll()
             .pathMatchers(HttpMethod.POST,"/api/auth/token").permitAll()
             .pathMatchers(HttpMethod.POST, "/api/account/**").permitAll()
