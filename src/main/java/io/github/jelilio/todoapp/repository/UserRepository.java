@@ -11,6 +11,8 @@ public interface UserRepository extends ReactiveCrudRepository<User, String> {
 
   Mono<Long> countByUsernameIgnoreCase(String username);
 
+  Mono<Long> countById(String userId);
+
   @Query(value = "{'$and':[ {'email': ?0}, {'activatedDate': { '$ne': null } } ] }", count = true)
   Mono<Long> countByEmailAvailable(String email);
 
@@ -25,4 +27,7 @@ public interface UserRepository extends ReactiveCrudRepository<User, String> {
 
   @Query("{'$and':[ {'$or':[ {'username': ?0}, {'email': ?0} ] }, {'activatedDate': { '$ne': null } } ] }")
   Mono<UserDetails> findByUsernameOrEmailAndActivated(String usernameOrEmail);
+
+  @Query("{'$and':[ {'$or':[ {'username': ?0}, {'email': ?0} ] }, {'activatedDate': { '$ne': null } } ] }")
+  Mono<User> findUserByUsernameOrEmailAndActivated(String usernameOrEmail);
 }
