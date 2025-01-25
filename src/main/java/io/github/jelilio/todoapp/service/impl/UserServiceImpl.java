@@ -5,6 +5,7 @@ import io.github.jelilio.todoapp.dto.BasicRegisterDto;
 import io.github.jelilio.todoapp.entity.User;
 import io.github.jelilio.todoapp.exception.AlreadyExistException;
 import io.github.jelilio.todoapp.exception.AuthenticationException;
+import io.github.jelilio.todoapp.exception.NotFoundException;
 import io.github.jelilio.todoapp.repository.UserRepository;
 import io.github.jelilio.todoapp.service.MailerService;
 import io.github.jelilio.todoapp.service.OtpService;
@@ -23,9 +24,11 @@ import reactor.core.publisher.Mono;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.function.Supplier;
 
 import static io.github.jelilio.todoapp.exception.AuthenticationException.*;
 import static io.github.jelilio.todoapp.utils.Constants.ZERO;
+import static io.github.jelilio.todoapp.utils.SecurityUtil.loggedInUserId;
 
 @Service
 public class UserServiceImpl implements UserService, ReactiveUserDetailsService {
@@ -50,9 +53,24 @@ public class UserServiceImpl implements UserService, ReactiveUserDetailsService 
   }
 
   @Override
+  public Mono<String> getLoggedInUserId() {
+    return loggedInUserId().flatMap(userId -> {
+      return checkIfUserExistOrException(userId).flatMap(__ -> {
+        return Mono.just(userId);
+      });
+    });
+  }
+
+  @Override
   public Mono<UserDetails> findByUsername(String username) {
     LOG.debug("findByUsername: {}", username);
     return userRepository.findByUsernameOrEmailAndActivated(username);
+  }
+
+  @Override
+  public Mono<User> findByUsernameOrEmail(String username) {
+    LOG.debug("findByUsernameOrEmail: {}", username);
+    return userRepository.findUserByUsernameOrEmailAndActivated(username);
   }
 
   @Override
@@ -62,14 +80,32 @@ public class UserServiceImpl implements UserService, ReactiveUserDetailsService 
   }
 
   @Override
+  public Mono<Boolean> checkIfUserExist(String userId) {
+    return userRepository.countById(userId)
+        .map(count -> count > ZERO);
+  }
+
+  @Override
+  public Mono<Boolean> checkIfUserExistOrException(String userId) {
+    return userRepository.countById(userId)
+        .flatMap(count -> {
+          if(count <= ZERO) {
+            return Mono.error(() -> new NotFoundException("User not found"));
+          }
+
+          return Mono.just(true);
+        });
+  }
+
+  @Override
   public Mono<Boolean> checkIfEmailAvailable(String email) {
     LOG.debug("checkIfEmailAvailable: {}", email);
     return userRepository.countByEmailAvailable(email)
         .map(count -> count == ZERO);
   }
 
-  @Transactional
   @Override
+  @Transactional
   public Mono<Pair<User, Integer>> register(BasicRegisterDto dto) {
     Mono<Boolean> uniEmailAvailable = checkIfEmailAvailable(dto.email());
     Mono<User> extLoginUni = userRepository.findByEmailAndNotActivated(dto.email())

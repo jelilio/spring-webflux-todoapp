@@ -8,7 +8,15 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 public interface UserService extends ReactiveUserDetailsService {
+  Mono<String> getLoggedInUserId();
+
+  Mono<User> findByUsernameOrEmail(String username);
+
   Mono<User> findByUserId(String userId);
+
+  Mono<Boolean> checkIfUserExist(String userId);
+
+  Mono<Boolean> checkIfUserExistOrException(String userId);
 
   Mono<Boolean> checkIfEmailAvailable(String email);
 

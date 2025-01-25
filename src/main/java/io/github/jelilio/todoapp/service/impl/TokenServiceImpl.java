@@ -4,6 +4,7 @@ import io.github.jelilio.todoapp.config.properties.AuthProperties;
 import io.github.jelilio.todoapp.dto.AuthRequestDto;
 import io.github.jelilio.todoapp.dto.RefreshTokenDto;
 import io.github.jelilio.todoapp.entity.RefreshTokenCache;
+import io.github.jelilio.todoapp.entity.User;
 import io.github.jelilio.todoapp.exception.AuthenticationException;
 import io.github.jelilio.todoapp.model.AuthResponse;
 import io.github.jelilio.todoapp.service.TokenService;
@@ -62,12 +63,13 @@ public class TokenServiceImpl implements TokenService {
     this.authManager = authManager;
   }
 
-  private String generateToken(String subject, Collection<? extends GrantedAuthority> authorities) {
+  private String generateToken(String id, String subject, Collection<? extends GrantedAuthority> authorities) {
     Instant now = Instant.now();
     String scope = authorities.stream()
         .map(GrantedAuthority::getAuthority)
         .collect(Collectors.joining(" "));
     JwtClaimsSet claims = JwtClaimsSet.builder()
+        .id(id)
         .issuer(authProperties.issuer())
         .issuedAt(now)
         .expiresAt(now.plus(authProperties.expiration().access(), ChronoUnit.SECONDS))
@@ -97,8 +99,12 @@ public class TokenServiceImpl implements TokenService {
 
     return authMono.flatMap(authentication -> saveRefreshToken(authentication.getName())
         .map(this::generateRefreshToken)
-        .map(rfTkn -> new AuthResponse(generateToken(
-            authentication.getName(), authentication.getAuthorities()), rfTkn)));
+        .map(rfTkn -> {
+          var user = (User) authentication.getPrincipal();
+          return new AuthResponse(generateToken(
+              user.getId(),
+              authentication.getName(), authentication.getAuthorities()), rfTkn);
+        }));
   }
 
   @Override
@@ -116,10 +122,10 @@ public class TokenServiceImpl implements TokenService {
   }
 
   public Mono<AuthResponse> generateToken(RefreshTokenCache rfTkn, Jwt jwt) {
-    return userService.findByUsername(rfTkn.getUsername())
-        .flatMap(userDetails -> {
+    return userService.findByUsernameOrEmail(rfTkn.getUsername())
+        .flatMap(user -> {
           var rfToken =  jwt.getTokenValue();
-          var acToken = generateToken(userDetails.getUsername(), userDetails.getAuthorities());
+          var acToken = generateToken(user.getId(), user.getUsername(), user.getAuthorities());
 
           return Mono.just(new AuthResponse(acToken, rfToken));
         });
@@ -133,10 +139,10 @@ public class TokenServiceImpl implements TokenService {
   }
 
   @Override
-  public Mono<AuthResponse> generateToken(UserDetails user) {
+  public Mono<AuthResponse> generateToken(User user) {
     return saveRefreshToken(user.getUsername())
         .map(this::generateRefreshToken)
-        .map(rfTkn -> new AuthResponse(generateToken(user.getUsername(),
+        .map(rfTkn -> new AuthResponse(generateToken(user.getId(), user.getUsername(),
             user.getAuthorities()), rfTkn));
   }
 }
