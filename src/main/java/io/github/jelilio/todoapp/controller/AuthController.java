@@ -6,6 +6,7 @@ import io.github.jelilio.todoapp.model.AuthResponse;
 import io.github.jelilio.todoapp.service.TokenService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -24,7 +25,7 @@ public class AuthController {
   }
 
   @PostMapping("/token")
-  public Mono<AuthResponse> token(@RequestBody AuthRequestDto authentication) {
+  public Mono<AuthResponse> token(Authentication authentication) {
     return tokenService.generateToken(authentication);
   }
 
