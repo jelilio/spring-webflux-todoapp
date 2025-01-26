@@ -20,6 +20,7 @@ import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.authentication.ReactiveAuthenticationManager;
 import org.springframework.security.authentication.UserDetailsRepositoryReactiveAuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableReactiveMethodSecurity;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
@@ -66,7 +67,6 @@ public class SecurityConfig {
             .pathMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")
             .pathMatchers("/api/user/**").hasAuthority("ROLE_USER")
             .pathMatchers(HttpMethod.POST,"/api/auth/refresh").permitAll()
-            .pathMatchers(HttpMethod.POST,"/api/auth/token").permitAll()
             .pathMatchers(HttpMethod.POST, "/api/account/**").permitAll()
             .pathMatchers("/api/account/check-email").permitAll()
             .pathMatchers("/actuator/**").permitAll()
@@ -78,7 +78,7 @@ public class SecurityConfig {
           ex.authenticationEntryPoint(new BearerTokenServerAuthenticationEntryPoint());
           ex.accessDeniedHandler(new BearerTokenServerAccessDeniedHandler());
         })
-        .httpBasic(ServerHttpSecurity.HttpBasicSpec::disable)
+        .httpBasic(Customizer.withDefaults())
         .oauth2ResourceServer((oauth2Spec) ->
             oauth2Spec.jwt(jwtSpec -> jwtSpec.jwtAuthenticationConverter(jwtAuthenticationConverter()))
         );
