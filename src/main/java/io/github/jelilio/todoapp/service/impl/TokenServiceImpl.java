@@ -91,8 +91,19 @@ public class TokenServiceImpl implements TokenService {
   }
 
   @Override
+  public Mono<AuthResponse> generateToken(Authentication authentication) {
+    return saveRefreshToken(authentication.getName())
+        .map(this::generateRefreshToken)
+        .map(rfTkn -> {
+          var user = (User) authentication.getPrincipal();
+          return new AuthResponse(generateToken(
+              user.getId(),
+              authentication.getName(), authentication.getAuthorities()), rfTkn);
+        });
+  }
+
+  @Override
   public Mono<AuthResponse> generateToken(AuthRequestDto dto) {
-    LOG.debug("generateToken: {}", dto.username());
     var authMono = authManager
         .authenticate(UsernamePasswordAuthenticationToken.unauthenticated(dto.username(), dto.password()));
 
