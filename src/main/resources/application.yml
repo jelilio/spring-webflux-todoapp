@@ -29,7 +29,7 @@ cors:
 auth:
   issuer: http://jelilio.github.iio
   expiration:
-    access: 3600 # seconds
+    access: 60 # seconds
     refresh: 30 # days
   otp:
     duration: 300 # seconds

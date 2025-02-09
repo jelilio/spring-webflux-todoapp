@@ -67,6 +67,7 @@ public class TokenServiceImpl implements TokenService {
     String scope = authorities.stream()
         .map(GrantedAuthority::getAuthority)
         .collect(Collectors.joining(" "));
+    LOG.debug("token to expired in: {} seconds", authProperties.expiration().access());
     JwtClaimsSet claims = JwtClaimsSet.builder()
         .id(id)
         .issuer(authProperties.issuer())
@@ -96,9 +97,12 @@ public class TokenServiceImpl implements TokenService {
         .map(this::generateRefreshToken)
         .map(rfTkn -> {
           var user = (User) authentication.getPrincipal();
+          var userInfo = new AuthResponse.UserInfo(user.getName(), user.getEmail(),
+              user.getAuthorities().stream().map(GrantedAuthority::getAuthority).collect(Collectors.toSet()));
           return new AuthResponse(generateToken(
-              user.getId(),
-              authentication.getName(), authentication.getAuthorities()), rfTkn);
+              user.getId(), authentication.getName(), authentication.getAuthorities()),
+              rfTkn, userInfo
+          );
         });
   }
 
@@ -107,14 +111,7 @@ public class TokenServiceImpl implements TokenService {
     var authMono = authManager
         .authenticate(UsernamePasswordAuthenticationToken.unauthenticated(dto.username(), dto.password()));
 
-    return authMono.flatMap(authentication -> saveRefreshToken(authentication.getName())
-        .map(this::generateRefreshToken)
-        .map(rfTkn -> {
-          var user = (User) authentication.getPrincipal();
-          return new AuthResponse(generateToken(
-              user.getId(),
-              authentication.getName(), authentication.getAuthorities()), rfTkn);
-        }));
+    return authMono.flatMap(this::generateToken);
   }
 
   @Override
@@ -136,8 +133,10 @@ public class TokenServiceImpl implements TokenService {
         .flatMap(user -> {
           var rfToken =  jwt.getTokenValue();
           var acToken = generateToken(user.getId(), user.getUsername(), user.getAuthorities());
+          var userInfo = new AuthResponse.UserInfo(user.getName(), user.getEmail(),
+              user.getAuthorities().stream().map(GrantedAuthority::getAuthority).collect(Collectors.toSet()));
 
-          return Mono.just(new AuthResponse(acToken, rfToken));
+          return Mono.just(new AuthResponse(acToken, rfToken, userInfo));
         });
   }
 
@@ -150,9 +149,12 @@ public class TokenServiceImpl implements TokenService {
 
   @Override
   public Mono<AuthResponse> generateToken(User user) {
+    var userInfo = new AuthResponse.UserInfo(user.getName(), user.getEmail(),
+        user.getAuthorities().stream().map(GrantedAuthority::getAuthority).collect(Collectors.toSet()));
+
     return saveRefreshToken(user.getUsername())
         .map(this::generateRefreshToken)
         .map(rfTkn -> new AuthResponse(generateToken(user.getId(), user.getUsername(),
-            user.getAuthorities()), rfTkn));
+            user.getAuthorities()), rfTkn, userInfo));
   }
 }
